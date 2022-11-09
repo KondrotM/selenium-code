@@ -2,39 +2,50 @@ package org.mk;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.net.MalformedURLException;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class HotelTest {
 
+    /**
+     * TODO
+     * Create a setup / teardown class
+     * Correctly handle close after testing
+     * Convert project to page-object model
+     * Import reporting structure, e.g. Allure
+     *
+     */
+
     @Test
-    public void testHotel() throws InterruptedException {
+    public void testHotel() throws InterruptedException, MalformedURLException {
     /* TASK: Book 1 room for 4 nights (1 Deluxe Apartment)
         The 'deluxe' apartment is not on the rooms list: the 'Double Superior Room' was used instead.
 
-          0. Instantiate selenium, navigate to page */
+        0. Instantiate selenium, navigate to page */
         System.setProperty("webdriver.chrome.driver", "src/resources/chromedriver.exe");
 
-        WebDriver driver = new ChromeDriver();
+        ChromeOptions chromeOptions = new ChromeOptions();
+        ChromeDriver driver = new ChromeDriver();
 
         String url = "https://www.clock-software.com/demo-clockpms/index.html";
         driver.get(url);
 
         driver.manage().window().maximize();
 
-//        1. Select a valid date, and number of rooms and start the booking process
+//      1. Select a valid date, and number of rooms and start the booking process
 
         WebElement date = driver.findElement(By.xpath("//input[@id='date-start']"));
 
-        date.sendKeys("12-10-2022");
+        date.sendKeys("12-12-2022");
 
         WebElement numberOfNights = driver.findElement(By.xpath("//input[@id='to-place']"));
 
@@ -46,7 +57,7 @@ public class HotelTest {
         driver.switchTo().frame("clock_pms_iframe_1"); // switch selection context to iFrame
 
 
-//        2. Under Deluxe Apartment, select the most expensive package
+//      2. Under Deluxe Apartment, select the most expensive package
 
         List<WebElement> bookingOptions = driver.findElements(By.className("btn-success"));
         bookingOptions.get(bookingOptions.size() - 1).click();
@@ -69,17 +80,17 @@ public class HotelTest {
         addButton.submit(); // .click() is sometimes interrupted
 
 
-//        4. Validate all details – Date, no of nights, room type, rate, add on (extra services charges), total
+//      4. Validate all details – Date, no of nights, room type, rate, add on (extra services charges), total
 
         List<WebElement> prices = driver.findElements(By.xpath("//*[contains(text(),'EUR')]"));
 
 //      Validate date:
-        String expectedArrivalDate = "12 Oct 2022";
+        String expectedArrivalDate = "12 Dec 2022";
         String actualArrivalDate = driver.findElement(By.xpath("//b[contains(text(), 'Arrival')]/following::div")).getText();
 
         Assertions.assertEquals(expectedArrivalDate, actualArrivalDate, "Arrival date mismatch");
 
-        String expectedDepartureDate = "16 Oct 2022";
+        String expectedDepartureDate = "16 Dec 2022";
         String actualDepartureDate = driver.findElement(By.xpath("//b[contains(text(), 'Departure')]/following::div")).getText();
 
         Assertions.assertEquals(expectedDepartureDate, actualDepartureDate, "Departure date mismatch");
@@ -97,7 +108,7 @@ public class HotelTest {
         Assertions.assertEquals(expectedRoomType, actualRoomType, "Room type mismatch");
 
 //      Validate rate:
-        String expectedRate =  "Package Rate Spa for Family";
+        String expectedRate = "Package Rate Spa for Family";
         WebElement rateElement = driver.findElement(By.xpath("//b[contains(text(), 'Rate')]/following::div"));
         String actualRate = rateElement.getText();
 
@@ -105,13 +116,13 @@ public class HotelTest {
 
 //      Validate add-on:
         float expectedServicesPrice =
-                Float.parseFloat(expectedExtrasPrice1.split(" ")[0].replace(",",""))
-                + Float.parseFloat(expectedExtrasPrice2.split(" ")[0].replace(",",""));
+                Float.parseFloat(expectedExtrasPrice1.split(" ")[0].replace(",", ""))
+                        + Float.parseFloat(expectedExtrasPrice2.split(" ")[0].replace(",", ""));
 
         String extraServices = prices.get(2).getText();
 
         float actualServicesPrice =
-                Float.parseFloat(extraServices.split(" ")[0].replace(",",""));
+                Float.parseFloat(extraServices.split(" ")[0].replace(",", ""));
 
         Assertions.assertEquals(expectedServicesPrice, actualServicesPrice, "Addon price mismatch");
 
@@ -124,13 +135,13 @@ public class HotelTest {
 
         float expectedTotal =
                 expectedServicesPrice
-                + Float.parseFloat(roomsPrice.split(" ")[0].replace(",",""))
-                + Float.parseFloat(cityTax.split(" ")[0].replace(",",""));
+                        + Float.parseFloat(roomsPrice.split(" ")[0].replace(",", ""))
+                        + Float.parseFloat(cityTax.split(" ")[0].replace(",", ""));
 //                + Float.parseFloat(vat.split(" ")[0].replace(",",""));
 
         float actualTotal = Float.parseFloat(
                 driver.findElement(By.xpath("//h3[contains(text(), 'Total')]/following::h3"))
-                    .getText().split(" ")[0].replace(",","")
+                        .getText().split(" ")[0].replace(",", "")
         );
 
         // validation failed if VAT is included: total does not include VAT which may be unintended
@@ -139,7 +150,7 @@ public class HotelTest {
 
 //      5. Add traveler details and payment method to CC
         WebElement formEmail = driver.findElement(By.xpath("//input[@title='E-mail']"));
-        formEmail.sendKeys("matej.kondrot@group.com");
+        formEmail.sendKeys("matej.kondrot@qualitestgroup.com");
 
         WebElement formLastName = driver.findElement(By.xpath("//input[@title='Last name']"));
         formLastName.sendKeys("Kondrot");
@@ -157,7 +168,7 @@ public class HotelTest {
         WebElement createBooking = driver.findElement(By.xpath("//input[@value='Create Booking']"));
         createBooking.click();
 
-//        6. Use a dummy Visa CC and complete payment
+//      6. Use a dummy Visa CC and complete payment
         WebElement cardNumber = driver.findElement(By.id("cardNumber"));
         cardNumber.sendKeys("4111111111111111");
 
@@ -188,7 +199,7 @@ public class HotelTest {
         WebElement payButton = driver.findElement(By.xpath("//button[@type='submit']"));
         payButton.submit();
 
-//        7. Validate Booking complete msg
+//      7. Validate Booking complete msg
         WebElement confirm = driver.findElement(By.className("text-success"));
         Assertions.assertNotNull(confirm);
 
